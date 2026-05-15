@@ -285,8 +285,16 @@
     line-height: 1.6;
     color: var(--fg-prose);
   }
+  /* `vertical-align: top` + explicit `line-height: 1` strip the
+     baseline / line-box ghost space that inline-block elements
+     would otherwise carry below the button. Without this, the
+     surrounding callout padding math (2.5rem bottom) is correct
+     but the button's *line-box* extends past its visual edge,
+     which reads as the button sitting flush against the bottom
+     border in some renderers. */
   .callout-link {
     display: inline-block;
+    vertical-align: top;
     margin: 0;
     padding: 11px 24px;
     border-radius: 999px;
@@ -295,6 +303,7 @@
     font-family: var(--sans);
     font-size: 13px;
     font-weight: 500;
+    line-height: 1;
     letter-spacing: var(--tracking-soft);
     text-decoration: none;
     transition: background var(--duration-fast) var(--ease);
