@@ -71,7 +71,11 @@
     color: var(--black);
     background: var(--white);
     min-height: 100vh;
-    padding: 4rem 1.5rem 6rem;
+    /* Bottom padding stacks env(safe-area-inset-bottom) on top
+       of a generous 6rem base so the action bar always clears
+       the iOS home indicator and never lands flush with the
+       viewport edge on desktop. */
+    padding: 4rem 1.5rem calc(6rem + env(safe-area-inset-bottom, 0px));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -228,6 +232,62 @@
     font-size: 12px;
     letter-spacing: var(--tracking-soft);
     color: var(--mid);
+  }
+
+  /* ============================================================
+     Music callout — quiet editorial pull-quote on the warm
+     tonal surface. Used to nudge couples to the music selection
+     form from the Moments step. Not an alert banner; carries
+     no semantic urgency. The CTA button uses the same pill
+     register as the primary action button.
+     ============================================================ */
+  .callout {
+    margin: 0 0 2.5rem;
+    padding: 2rem 2.25rem;
+    background: var(--bg-tonal);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+  }
+  .callout-eyebrow {
+    display: block;
+    margin-bottom: 0.6rem;
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow-wide);
+    text-transform: uppercase;
+    color: var(--mid);
+  }
+  .callout-title {
+    margin: 0 0 0.75rem;
+    font-family: var(--serif);
+    font-size: clamp(20px, 2.4vw, 26px);
+    font-weight: 400;
+    line-height: 1.25;
+    color: var(--black);
+  }
+  .callout-body {
+    margin: 0 0 1.5rem;
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--fg-prose);
+  }
+  .callout-link {
+    display: inline-block;
+    padding: 11px 24px;
+    border-radius: 999px;
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: var(--tracking-soft);
+    text-decoration: none;
+    transition: background var(--duration-fast) var(--ease);
+  }
+  .callout-link:hover {
+    background: #222;
   }
 
   /* ============================================================
@@ -594,13 +654,19 @@
   /* ============================================================
      Buttons
      ============================================================ */
+  /* Action bar — Back on the left, primary action on the right.
+     Generous margin above (4rem) keeps it visually separated
+     from the form content; explicit margin-bottom (3rem) plus
+     the body's calc padding-bottom guarantees the buttons clear
+     the viewport edge / iOS home indicator at every breakpoint. */
   .btn-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 0.75rem;
-    margin-top: 3rem;
+    margin-top: 4rem;
+    margin-bottom: 3rem;
     padding-top: 1.75rem;
     border-top: 1px solid var(--rule);
   }
@@ -732,7 +798,10 @@
 
   @media (max-width: 600px) {
     body {
-      padding: 2.5rem 1.25rem 4rem;
+      /* Mobile: same calc pattern so the iOS home indicator is
+         always cleared; smaller base value because the viewport
+         is shorter. */
+      padding: 2.5rem 1.25rem calc(4rem + env(safe-area-inset-bottom, 0px));
     }
     .progress-bar {
       margin-bottom: 2.5rem;
@@ -743,16 +812,35 @@
     .moment {
       padding: 1.5rem 1.25rem;
     }
-    .btn-row {
-      gap: 0.5rem;
+    .callout {
+      padding: 1.5rem 1.25rem;
     }
     .btn-primary,
     .btn-secondary {
-      padding: 12px 22px;
-      font-size: 13px;
+      padding: 13px 22px;
+      font-size: 14px;
     }
     .yesno {
       flex-wrap: wrap;
+    }
+  }
+
+  /* Narrow viewport: stack the action bar with the primary
+     action on top (column-reverse so the second child — the
+     Next/Submit button — renders first). Full-width tap
+     targets so the button is comfortable on phones. */
+  @media (max-width: 540px) {
+    .btn-row {
+      flex-direction: column-reverse;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+    .btn-row .btn-primary,
+    .btn-row .btn-secondary {
+      width: 100%;
+      text-align: center;
     }
   }
 </style>
@@ -778,10 +866,10 @@
        and the form is mounted. -->
   <nav class="progress-bar" id="progressBar" aria-label="Runsheet steps" hidden>
     <button type="button" class="progress-step active" data-step="0" aria-current="page">1. Details</button>
-    <button type="button" class="progress-step" data-step="1">2. Timing</button>
-    <button type="button" class="progress-step" data-step="2">3. Locations</button>
-    <button type="button" class="progress-step" data-step="3">4. Vendors</button>
-    <button type="button" class="progress-step" data-step="4">5. Moments</button>
+    <button type="button" class="progress-step" data-step="1">2. Locations</button>
+    <button type="button" class="progress-step" data-step="2">3. Timing</button>
+    <button type="button" class="progress-step" data-step="3">4. Moments</button>
+    <button type="button" class="progress-step" data-step="4">5. Vendors</button>
     <button type="button" class="progress-step" data-step="5">6. Review</button>
   </nav>
 
@@ -813,11 +901,6 @@
               <span class="field-error">Please add a last name</span>
             </div>
           </div>
-          <div class="field" data-field="brideEmail">
-            <label class="field-label" for="brideEmail">Email <span class="field-required">·  required</span></label>
-            <input type="email" id="brideEmail" autocomplete="email" inputmode="email" />
-            <span class="field-error">Please add a valid email address</span>
-          </div>
           <div class="field" data-field="bridePhone">
             <label class="field-label" for="bridePhone">Contact number <span class="field-required">·  required</span></label>
             <input type="tel" id="bridePhone" autocomplete="tel" inputmode="tel" />
@@ -845,11 +928,6 @@
               <span class="field-error">Please add a last name</span>
             </div>
           </div>
-          <div class="field" data-field="groomEmail">
-            <label class="field-label" for="groomEmail">Email <span class="field-required">·  required</span></label>
-            <input type="email" id="groomEmail" autocomplete="email" inputmode="email" />
-            <span class="field-error">Please add a valid email address</span>
-          </div>
           <div class="field" data-field="groomPhone">
             <label class="field-label" for="groomPhone">Contact number <span class="field-required">·  required</span></label>
             <input type="tel" id="groomPhone" autocomplete="tel" inputmode="tel" />
@@ -862,159 +940,14 @@
     <p class="autosave-note">Your progress is saved automatically</p>
 
     <div class="btn-row">
-      <button type="button" class="btn-primary" data-next>Next: Timing →</button>
-    </div>
-  </section>
-
-  <!-- ============================================================
-       Step 2 — Timing
-       ============================================================ -->
-  <section class="screen" id="screen1" hidden>
-    <span class="eyebrow">Timing</span>
-    <h2>The <em>shape</em> of your day.</h2>
-    <p>When we're filming, when each part of the day runs, and where ceremony and reception are happening.</p>
-
-    <div class="moment-sections">
-      <div class="moment">
-        <header class="moment-header">
-          <span class="moment-eyebrow">Filming</span>
-          <h3 class="moment-title">Videographer hours</h3>
-          <p class="moment-sub">When you'd like us on site and when we wrap</p>
-        </header>
-        <div class="form-stack">
-          <div class="field" data-field="videographerStartTime">
-            <label class="field-label">Start time <span class="field-required">·  required</span></label>
-            <div class="time-input" data-time="videographerStartTime">
-              <input type="number" class="time-hour" placeholder="HH" min="1" max="12" inputmode="numeric" aria-label="Start hour" />
-              <span class="time-sep">:</span>
-              <input type="number" class="time-min" placeholder="MM" min="0" max="59" inputmode="numeric" aria-label="Start minute" />
-              <div class="time-period" role="radiogroup" aria-label="Start period">
-                <button type="button" class="time-period-btn" data-period="AM">AM</button>
-                <button type="button" class="time-period-btn" data-period="PM">PM</button>
-              </div>
-            </div>
-            <span class="field-error">Please complete the start time</span>
-          </div>
-          <div class="field" data-field="videographerFinishTime">
-            <label class="field-label">Finish time <span class="field-required">·  required</span></label>
-            <div class="time-input" data-time="videographerFinishTime">
-              <input type="number" class="time-hour" placeholder="HH" min="1" max="12" inputmode="numeric" aria-label="Finish hour" />
-              <span class="time-sep">:</span>
-              <input type="number" class="time-min" placeholder="MM" min="0" max="59" inputmode="numeric" aria-label="Finish minute" />
-              <div class="time-period" role="radiogroup" aria-label="Finish period">
-                <button type="button" class="time-period-btn" data-period="AM">AM</button>
-                <button type="button" class="time-period-btn" data-period="PM">PM</button>
-              </div>
-            </div>
-            <span class="field-error">Please complete the finish time</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="moment">
-        <header class="moment-header">
-          <span class="moment-eyebrow">Ceremony</span>
-          <h3 class="moment-title">Ceremony details</h3>
-          <p class="moment-sub">Start time, end time, full address</p>
-        </header>
-        <div class="form-stack">
-          <div class="form-row">
-            <div class="field" data-field="ceremonyStartTime">
-              <label class="field-label">Start <span class="field-required">·  required</span></label>
-              <div class="time-input" data-time="ceremonyStartTime">
-                <input type="number" class="time-hour" placeholder="HH" min="1" max="12" inputmode="numeric" aria-label="Ceremony start hour" />
-                <span class="time-sep">:</span>
-                <input type="number" class="time-min" placeholder="MM" min="0" max="59" inputmode="numeric" aria-label="Ceremony start minute" />
-                <div class="time-period" role="radiogroup" aria-label="Ceremony start period">
-                  <button type="button" class="time-period-btn" data-period="AM">AM</button>
-                  <button type="button" class="time-period-btn" data-period="PM">PM</button>
-                </div>
-              </div>
-              <span class="field-error">Please complete the start time</span>
-            </div>
-            <div class="field" data-field="ceremonyEndTime">
-              <label class="field-label">End <span class="field-required">·  required</span></label>
-              <div class="time-input" data-time="ceremonyEndTime">
-                <input type="number" class="time-hour" placeholder="HH" min="1" max="12" inputmode="numeric" aria-label="Ceremony end hour" />
-                <span class="time-sep">:</span>
-                <input type="number" class="time-min" placeholder="MM" min="0" max="59" inputmode="numeric" aria-label="Ceremony end minute" />
-                <div class="time-period" role="radiogroup" aria-label="Ceremony end period">
-                  <button type="button" class="time-period-btn" data-period="AM">AM</button>
-                  <button type="button" class="time-period-btn" data-period="PM">PM</button>
-                </div>
-              </div>
-              <span class="field-error">Please complete the end time</span>
-            </div>
-          </div>
-          <div class="field" data-field="ceremonyAddress">
-            <label class="field-label" for="ceremonyAddress">Address <span class="field-required">·  required</span></label>
-            <textarea id="ceremonyAddress" rows="2" placeholder="Street, suburb, state, postcode"></textarea>
-            <span class="field-error">Please add the ceremony address</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="moment">
-        <header class="moment-header">
-          <span class="moment-eyebrow">Reception</span>
-          <h3 class="moment-title">Reception details</h3>
-          <p class="moment-sub">Start time, end time, full address</p>
-        </header>
-        <div class="form-stack">
-          <div class="form-row">
-            <div class="field" data-field="receptionStartTime">
-              <label class="field-label">Start <span class="field-required">·  required</span></label>
-              <div class="time-input" data-time="receptionStartTime">
-                <input type="number" class="time-hour" placeholder="HH" min="1" max="12" inputmode="numeric" aria-label="Reception start hour" />
-                <span class="time-sep">:</span>
-                <input type="number" class="time-min" placeholder="MM" min="0" max="59" inputmode="numeric" aria-label="Reception start minute" />
-                <div class="time-period" role="radiogroup" aria-label="Reception start period">
-                  <button type="button" class="time-period-btn" data-period="AM">AM</button>
-                  <button type="button" class="time-period-btn" data-period="PM">PM</button>
-                </div>
-              </div>
-              <span class="field-error">Please complete the start time</span>
-            </div>
-            <div class="field" data-field="receptionEndTime">
-              <label class="field-label">End <span class="field-required">·  required</span></label>
-              <div class="time-input" data-time="receptionEndTime">
-                <input type="number" class="time-hour" placeholder="HH" min="1" max="12" inputmode="numeric" aria-label="Reception end hour" />
-                <span class="time-sep">:</span>
-                <input type="number" class="time-min" placeholder="MM" min="0" max="59" inputmode="numeric" aria-label="Reception end minute" />
-                <div class="time-period" role="radiogroup" aria-label="Reception end period">
-                  <button type="button" class="time-period-btn" data-period="AM">AM</button>
-                  <button type="button" class="time-period-btn" data-period="PM">PM</button>
-                </div>
-              </div>
-              <span class="field-error">Please complete the end time</span>
-            </div>
-          </div>
-          <div class="field" data-field="receptionAddress">
-            <label class="field-label" for="receptionAddress">Address <span class="field-required">·  required</span></label>
-            <textarea id="receptionAddress" rows="2" placeholder="Street, suburb, state, postcode"></textarea>
-            <span class="field-error">Please add the reception address</span>
-          </div>
-          <div class="field" data-field="guestCount">
-            <label class="field-label" for="guestCount">Estimated guest count <span class="field-required">·  required</span></label>
-            <input type="number" id="guestCount" min="1" inputmode="numeric" placeholder="e.g. 120" />
-            <span class="field-error">Please add an estimated guest count</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <p class="autosave-note">Your progress is saved automatically</p>
-
-    <div class="btn-row">
-      <button type="button" class="btn-secondary" data-prev>← Back</button>
       <button type="button" class="btn-primary" data-next>Next: Locations →</button>
     </div>
   </section>
 
   <!-- ============================================================
-       Step 3 — Locations
+       Step 2 — Locations (was Step 3)
        ============================================================ -->
-  <section class="screen" id="screen2" hidden>
+  <section class="screen" id="screen1" hidden>
     <span class="eyebrow">Locations</span>
     <h2>Where the <em>morning</em> starts.</h2>
     <p>The full addresses for bride and groom preparations so we know where to be and when.</p>
@@ -1055,64 +988,79 @@
 
     <div class="btn-row">
       <button type="button" class="btn-secondary" data-prev>← Back</button>
-      <button type="button" class="btn-primary" data-next>Next: Vendors →</button>
+      <button type="button" class="btn-primary" data-next>Next: Timing →</button>
     </div>
   </section>
 
   <!-- ============================================================
-       Step 4 — The day's vendors (all optional)
+       Step 3 — Timing (was Step 2). Videographer start/finish
+       and ceremony/reception end times all removed; the form now
+       only captures ceremony start + address, reception start +
+       address, and guest count.
        ============================================================ -->
-  <section class="screen" id="screen3" hidden>
-    <span class="eyebrow">The day's vendors</span>
-    <h2>Who else is <em>on the team?</em></h2>
-    <p>So we can coordinate with everyone in the lead-up and on the day. All of this is optional — leave anything blank if it doesn't apply.</p>
+  <section class="screen" id="screen2" hidden>
+    <span class="eyebrow">Timing</span>
+    <h2>The <em>shape</em> of your day.</h2>
+    <p>When each part of the day runs, where ceremony and reception are happening, and how many guests we're filming.</p>
 
     <div class="moment-sections">
       <div class="moment">
         <header class="moment-header">
-          <span class="moment-eyebrow">Vendors</span>
-          <h3 class="moment-title">Your team for the day</h3>
+          <span class="moment-eyebrow">Ceremony</span>
+          <h3 class="moment-title">Ceremony details</h3>
+          <p class="moment-sub">Start time and full address</p>
         </header>
         <div class="form-stack">
-          <div class="field" data-field="weddingPlanner">
-            <label class="field-label" for="weddingPlanner">Wedding planner</label>
-            <input type="text" id="weddingPlanner" placeholder="Name (and contact if helpful)" />
+          <div class="field" data-field="ceremonyStartTime">
+            <label class="field-label">Start time <span class="field-required">·  required</span></label>
+            <div class="time-input" data-time="ceremonyStartTime">
+              <input type="number" class="time-hour" placeholder="HH" min="1" max="12" inputmode="numeric" aria-label="Ceremony start hour" />
+              <span class="time-sep">:</span>
+              <input type="number" class="time-min" placeholder="MM" min="0" max="59" inputmode="numeric" aria-label="Ceremony start minute" />
+              <div class="time-period" role="radiogroup" aria-label="Ceremony start period">
+                <button type="button" class="time-period-btn" data-period="AM">AM</button>
+                <button type="button" class="time-period-btn" data-period="PM">PM</button>
+              </div>
+            </div>
+            <span class="field-error">Please complete the start time</span>
           </div>
-          <div class="field" data-field="caterer">
-            <label class="field-label" for="caterer">Caterer</label>
-            <input type="text" id="caterer" />
+          <div class="field" data-field="ceremonyAddress">
+            <label class="field-label" for="ceremonyAddress">Address <span class="field-required">·  required</span></label>
+            <textarea id="ceremonyAddress" rows="2" placeholder="Street, suburb, state, postcode"></textarea>
+            <span class="field-error">Please add the ceremony address</span>
           </div>
-          <div class="field" data-field="photographer">
-            <label class="field-label" for="photographer">Photographer</label>
-            <input type="text" id="photographer" />
+        </div>
+      </div>
+
+      <div class="moment">
+        <header class="moment-header">
+          <span class="moment-eyebrow">Reception</span>
+          <h3 class="moment-title">Reception details</h3>
+          <p class="moment-sub">Start time, full address, and estimated guest count</p>
+        </header>
+        <div class="form-stack">
+          <div class="field" data-field="receptionStartTime">
+            <label class="field-label">Start time <span class="field-required">·  required</span></label>
+            <div class="time-input" data-time="receptionStartTime">
+              <input type="number" class="time-hour" placeholder="HH" min="1" max="12" inputmode="numeric" aria-label="Reception start hour" />
+              <span class="time-sep">:</span>
+              <input type="number" class="time-min" placeholder="MM" min="0" max="59" inputmode="numeric" aria-label="Reception start minute" />
+              <div class="time-period" role="radiogroup" aria-label="Reception start period">
+                <button type="button" class="time-period-btn" data-period="AM">AM</button>
+                <button type="button" class="time-period-btn" data-period="PM">PM</button>
+              </div>
+            </div>
+            <span class="field-error">Please complete the start time</span>
           </div>
-          <div class="field" data-field="florist">
-            <label class="field-label" for="florist">Florist</label>
-            <input type="text" id="florist" />
+          <div class="field" data-field="receptionAddress">
+            <label class="field-label" for="receptionAddress">Address <span class="field-required">·  required</span></label>
+            <textarea id="receptionAddress" rows="2" placeholder="Street, suburb, state, postcode"></textarea>
+            <span class="field-error">Please add the reception address</span>
           </div>
-          <div class="field" data-field="hairStylist">
-            <label class="field-label" for="hairStylist">Hair stylist</label>
-            <input type="text" id="hairStylist" />
-          </div>
-          <div class="field" data-field="makeupArtist">
-            <label class="field-label" for="makeupArtist">Make-up artist</label>
-            <input type="text" id="makeupArtist" />
-          </div>
-          <div class="field" data-field="bandDj">
-            <label class="field-label" for="bandDj">Band / DJ</label>
-            <input type="text" id="bandDj" />
-          </div>
-          <div class="field" data-field="bridalGownDesigner">
-            <label class="field-label" for="bridalGownDesigner">Bridal gown designer</label>
-            <input type="text" id="bridalGownDesigner" />
-          </div>
-          <div class="field" data-field="groomSuit">
-            <label class="field-label" for="groomSuit">Groom's suit</label>
-            <input type="text" id="groomSuit" />
-          </div>
-          <div class="field" data-field="otherVendors">
-            <label class="field-label" for="otherVendors">Other vendors</label>
-            <textarea id="otherVendors" rows="3" placeholder="Stylist, celebrant, transport, anyone else…"></textarea>
+          <div class="field" data-field="guestCount">
+            <label class="field-label" for="guestCount">Estimated guest count <span class="field-required">·  required</span></label>
+            <input type="number" id="guestCount" min="1" inputmode="numeric" placeholder="e.g. 120" />
+            <span class="field-error">Please add an estimated guest count</span>
           </div>
         </div>
       </div>
@@ -1127,12 +1075,22 @@
   </section>
 
   <!-- ============================================================
-       Step 5 — Special moments + additional contact + notes
+       Step 4 — Special moments + music callout + additional
+       contact + notes. The music callout is editorial chrome —
+       a quiet pull-quote-style nudge to the music selection
+       form, not an alert banner.
        ============================================================ -->
-  <section class="screen" id="screen4" hidden>
+  <section class="screen" id="screen3" hidden>
     <span class="eyebrow">Special moments</span>
     <h2>The <em>parts</em> we plan around.</h2>
     <p>Help us know which traditional moments are happening so we're in the right place at the right time. Skip anything that doesn't apply.</p>
+
+    <aside class="callout">
+      <span class="callout-eyebrow">Before you go</span>
+      <h3 class="callout-title">Have you filled out your music selections?</h3>
+      <p class="callout-body">If you haven't already, please head over to our music selection form to choose your songs for the ceremony, reception, and special dances. It only takes a few minutes and helps us match the visuals to your moments perfectly.</p>
+      <a class="callout-link" href="https://music.seaoflovefilm.co" target="_blank" rel="noopener noreferrer">Open music form ↗</a>
+    </aside>
 
     <div class="moment-sections">
       <div class="moment">
@@ -1213,6 +1171,74 @@
 
     <div class="btn-row">
       <button type="button" class="btn-secondary" data-prev>← Back</button>
+      <button type="button" class="btn-primary" data-next>Next: Vendors →</button>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Step 5 — The day's vendors (all optional). Moved from
+       Step 4 in the new ordering.
+       ============================================================ -->
+  <section class="screen" id="screen4" hidden>
+    <span class="eyebrow">The day's vendors</span>
+    <h2>Who else is <em>on the team?</em></h2>
+    <p>So we can coordinate with everyone in the lead-up and on the day. All of this is optional — leave anything blank if it doesn't apply.</p>
+
+    <div class="moment-sections">
+      <div class="moment">
+        <header class="moment-header">
+          <span class="moment-eyebrow">Vendors</span>
+          <h3 class="moment-title">Your team for the day</h3>
+        </header>
+        <div class="form-stack">
+          <div class="field" data-field="weddingPlanner">
+            <label class="field-label" for="weddingPlanner">Wedding planner</label>
+            <input type="text" id="weddingPlanner" placeholder="Name (and contact if helpful)" />
+          </div>
+          <div class="field" data-field="caterer">
+            <label class="field-label" for="caterer">Caterer</label>
+            <input type="text" id="caterer" />
+          </div>
+          <div class="field" data-field="photographer">
+            <label class="field-label" for="photographer">Photographer</label>
+            <input type="text" id="photographer" />
+          </div>
+          <div class="field" data-field="florist">
+            <label class="field-label" for="florist">Florist</label>
+            <input type="text" id="florist" />
+          </div>
+          <div class="field" data-field="hairStylist">
+            <label class="field-label" for="hairStylist">Hair stylist</label>
+            <input type="text" id="hairStylist" />
+          </div>
+          <div class="field" data-field="makeupArtist">
+            <label class="field-label" for="makeupArtist">Make-up artist</label>
+            <input type="text" id="makeupArtist" />
+          </div>
+          <div class="field" data-field="bandDj">
+            <label class="field-label" for="bandDj">Band / DJ</label>
+            <input type="text" id="bandDj" />
+          </div>
+          <div class="field" data-field="bridalGownDesigner">
+            <label class="field-label" for="bridalGownDesigner">Bridal gown designer</label>
+            <input type="text" id="bridalGownDesigner" />
+          </div>
+          <div class="field" data-field="groomSuit">
+            <label class="field-label" for="groomSuit">Groom's suit</label>
+            <input type="text" id="groomSuit" />
+          </div>
+          <div class="field" data-field="otherVendors">
+            <label class="field-label" for="otherVendors">Other vendors</label>
+            <textarea id="otherVendors" rows="3" placeholder="Stylist, celebrant, transport, anyone else…"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="autosave-note">Your progress is saved automatically</p>
+
+    <div class="btn-row">
+      <button type="button" class="btn-secondary" data-prev>← Back</button>
       <button type="button" class="btn-primary" data-next>Next: Review →</button>
     </div>
   </section>
@@ -1224,6 +1250,23 @@
     <span class="eyebrow">Almost done</span>
     <h2>Your <em>runsheet.</em></h2>
     <p>Take a moment to check everything looks right. You can edit any section before sending.</p>
+
+    <div class="moment-sections">
+      <div class="moment">
+        <header class="moment-header">
+          <span class="moment-eyebrow">Couple email</span>
+          <h3 class="moment-title">Best email to reach you both</h3>
+          <p class="moment-sub">We'll send confirmation here and use this for any wedding-related communication.</p>
+        </header>
+        <div class="form-stack">
+          <div class="field" data-field="coupleEmail">
+            <label class="field-label" for="coupleEmail">Email <span class="field-required">·  required</span></label>
+            <input type="email" id="coupleEmail" autocomplete="email" inputmode="email" placeholder="hello@example.com" />
+            <span class="field-error">Please add a valid email address</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="summary" id="summaryBox" aria-live="polite"></div>
 
@@ -1295,25 +1338,30 @@
   var state = {
     brideFirstName: '',
     brideLastName: '',
-    brideEmail: '',
     bridePhone: '',
     groomFirstName: '',
     groomLastName: '',
-    groomEmail: '',
     groomPhone: '',
-
-    videographerStartTime:  { hour: '', min: '', period: '' },
-    videographerFinishTime: { hour: '', min: '', period: '' },
-    ceremonyStartTime:      { hour: '', min: '', period: '' },
-    ceremonyEndTime:        { hour: '', min: '', period: '' },
-    ceremonyAddress:        '',
-    receptionStartTime:     { hour: '', min: '', period: '' },
-    receptionEndTime:       { hour: '', min: '', period: '' },
-    receptionAddress:       '',
-    guestCount:             '',
 
     bridePrepAddress: '',
     groomPrepAddress: '',
+
+    ceremonyStartTime:  { hour: '', min: '', period: '' },
+    ceremonyAddress:    '',
+    receptionStartTime: { hour: '', min: '', period: '' },
+    receptionAddress:   '',
+    guestCount:         '',
+
+    firstDance: null,
+    fatherDaughterDance: null,
+    motherSonDance: null,
+    cakeCutting: null,
+
+    contactFirstName: '',
+    contactLastName: '',
+    contactPhone: '',
+
+    notes: '',
 
     weddingPlanner: '',
     caterer: '',
@@ -1326,16 +1374,7 @@
     groomSuit: '',
     otherVendors: '',
 
-    firstDance: null,
-    fatherDaughterDance: null,
-    motherSonDance: null,
-    cakeCutting: null,
-
-    contactFirstName: '',
-    contactLastName: '',
-    contactPhone: '',
-
-    notes: '',
+    coupleEmail: '',
   };
 
   /* ============================================================
@@ -1413,13 +1452,14 @@
 
     /* Text inputs / textareas */
     [
-      'brideFirstName','brideLastName','brideEmail','bridePhone',
-      'groomFirstName','groomLastName','groomEmail','groomPhone',
-      'ceremonyAddress','receptionAddress','guestCount',
+      'brideFirstName','brideLastName','bridePhone',
+      'groomFirstName','groomLastName','groomPhone',
       'bridePrepAddress','groomPrepAddress',
+      'ceremonyAddress','receptionAddress','guestCount',
+      'contactFirstName','contactLastName','contactPhone','notes',
       'weddingPlanner','caterer','photographer','florist','hairStylist',
       'makeupArtist','bandDj','bridalGownDesigner','groomSuit','otherVendors',
-      'contactFirstName','contactLastName','contactPhone','notes',
+      'coupleEmail',
     ].forEach(function (id) {
       var el = document.getElementById(id);
       if (el && state[id]) el.value = state[id];
@@ -1608,20 +1648,27 @@
      .field with .has-error, jumps focus to the first error,
      and returns false so the caller skips advancing.
      ============================================================ */
+  /* New step order:
+       0 — Details      (bride + groom name/phone)
+       1 — Locations    (bride prep + groom prep addresses)
+       2 — Timing       (ceremony start+address, reception start+address, guests)
+       3 — Moments      (all optional)
+       4 — Vendors      (all optional)
+       5 — Review       (couple email — only email captured on the form) */
   var REQUIRED = {
     0: [
-      'brideFirstName','brideLastName','brideEmail','bridePhone',
-      'groomFirstName','groomLastName','groomEmail','groomPhone',
+      'brideFirstName','brideLastName','bridePhone',
+      'groomFirstName','groomLastName','groomPhone',
     ],
-    1: [
-      'videographerStartTime','videographerFinishTime',
-      'ceremonyStartTime','ceremonyEndTime','ceremonyAddress',
-      'receptionStartTime','receptionEndTime','receptionAddress',
+    1: ['bridePrepAddress','groomPrepAddress'],
+    2: [
+      'ceremonyStartTime','ceremonyAddress',
+      'receptionStartTime','receptionAddress',
       'guestCount',
     ],
-    2: ['bridePrepAddress','groomPrepAddress'],
     3: [],
     4: [],
+    5: ['coupleEmail'],
   };
 
   function isEmail(v) {
@@ -1640,7 +1687,7 @@
 
   function validateField(name) {
     var val = state[name];
-    if (name === 'brideEmail' || name === 'groomEmail') {
+    if (name === 'coupleEmail') {
       return isEmail((val || '').trim());
     }
     if (name === 'guestCount') {
@@ -1671,9 +1718,13 @@
     return true;
   }
 
+  /* All steps are validated on final submit. Steps 3 and 4 have
+     no required fields so they pass through; steps 0–2 and 5
+     check their respective sets. The first failing step is
+     returned so the caller can jump back to it. */
   function validateAll() {
     var allBad = null;
-    [0, 1, 2].forEach(function (step) {
+    [0, 1, 2, 3, 4, 5].forEach(function (step) {
       if (!validateStep(step) && allBad === null) {
         allBad = step;
       }
@@ -1737,33 +1788,39 @@
     var groomName  = (state.groomFirstName + ' ' + state.groomLastName).trim() || '—';
     var contactName = (state.contactFirstName + ' ' + state.contactLastName).trim() || '—';
 
+    /* Edit-step indices follow the new ordering:
+         0 Details · 1 Locations · 2 Timing · 3 Moments · 4 Vendors */
     var details = summaryBlock('Your details', 0, [
-      summaryRow('Bride',           brideName),
-      summaryRow('Bride email',     formatField(state.brideEmail)),
-      summaryRow('Bride phone',     formatField(state.bridePhone)),
-      summaryRow('Groom',           groomName),
-      summaryRow('Groom email',     formatField(state.groomEmail)),
-      summaryRow('Groom phone',     formatField(state.groomPhone)),
+      summaryRow('Bride',       brideName),
+      summaryRow('Bride phone', formatField(state.bridePhone)),
+      summaryRow('Groom',       groomName),
+      summaryRow('Groom phone', formatField(state.groomPhone)),
     ]);
 
-    var timing = summaryBlock('Timing', 1, [
-      summaryRow('Videographer start',  formatTime(state.videographerStartTime)),
-      summaryRow('Videographer finish', formatTime(state.videographerFinishTime)),
-      summaryRow('Ceremony start',      formatTime(state.ceremonyStartTime)),
-      summaryRow('Ceremony end',        formatTime(state.ceremonyEndTime)),
-      summaryRow('Ceremony address',    formatField(state.ceremonyAddress)),
-      summaryRow('Reception start',     formatTime(state.receptionStartTime)),
-      summaryRow('Reception end',       formatTime(state.receptionEndTime)),
-      summaryRow('Reception address',   formatField(state.receptionAddress)),
-      summaryRow('Guest count',         formatField(state.guestCount)),
-    ]);
-
-    var locations = summaryBlock('Locations', 2, [
+    var locations = summaryBlock('Locations', 1, [
       summaryRow('Bride prep address', formatField(state.bridePrepAddress)),
       summaryRow('Groom prep address', formatField(state.groomPrepAddress)),
     ]);
 
-    var vendors = summaryBlock('Vendors', 3, [
+    var timing = summaryBlock('Timing', 2, [
+      summaryRow('Ceremony start',    formatTime(state.ceremonyStartTime)),
+      summaryRow('Ceremony address',  formatField(state.ceremonyAddress)),
+      summaryRow('Reception start',   formatTime(state.receptionStartTime)),
+      summaryRow('Reception address', formatField(state.receptionAddress)),
+      summaryRow('Guest count',       formatField(state.guestCount)),
+    ]);
+
+    var moments = summaryBlock('Special moments', 3, [
+      summaryRow('First dance',             formatYesNo(state.firstDance)),
+      summaryRow('Father / daughter dance', formatYesNo(state.fatherDaughterDance)),
+      summaryRow('Mother / son dance',      formatYesNo(state.motherSonDance)),
+      summaryRow('Cake cutting',            formatYesNo(state.cakeCutting)),
+      summaryRow('Additional contact',      contactName),
+      summaryRow('Contact phone',           formatField(state.contactPhone)),
+      summaryRow('Notes',                   formatField(state.notes)),
+    ]);
+
+    var vendors = summaryBlock('Vendors', 4, [
       summaryRow('Wedding planner',     formatField(state.weddingPlanner)),
       summaryRow('Caterer',             formatField(state.caterer)),
       summaryRow('Photographer',        formatField(state.photographer)),
@@ -1776,18 +1833,8 @@
       summaryRow('Other vendors',       formatField(state.otherVendors)),
     ]);
 
-    var moments = summaryBlock('Special moments', 4, [
-      summaryRow('First dance',             formatYesNo(state.firstDance)),
-      summaryRow('Father / daughter dance', formatYesNo(state.fatherDaughterDance)),
-      summaryRow('Mother / son dance',      formatYesNo(state.motherSonDance)),
-      summaryRow('Cake cutting',            formatYesNo(state.cakeCutting)),
-      summaryRow('Additional contact',      contactName),
-      summaryRow('Contact phone',           formatField(state.contactPhone)),
-      summaryRow('Notes',                   formatField(state.notes)),
-    ]);
-
     document.getElementById('summaryBox').innerHTML =
-      details + timing + locations + vendors + moments;
+      details + locations + timing + moments + vendors;
 
     /* Edit buttons can't sit on inline onclick because Astro-
        style templates spec'd no inline handlers in the JS pass —
@@ -1819,43 +1866,31 @@
     btn.disabled = true;
     btn.textContent = 'Sending your runsheet…';
 
+    /* Payload shape matches the new step order. Email is the
+       single shared couple email captured on Step 6; bride/groom
+       emails were removed. Videographer hours and ceremony/
+       reception end times were dropped from Step 3 (Timing). */
     var payload = {
       mondayItemId: mondayItemId,
       coupleNames: coupleNames || null,
+      coupleEmail: state.coupleEmail,
       submittedAt: new Date().toISOString(),
 
       brideFirstName: state.brideFirstName,
       brideLastName:  state.brideLastName,
-      brideEmail:     state.brideEmail,
       bridePhone:     state.bridePhone,
       groomFirstName: state.groomFirstName,
       groomLastName:  state.groomLastName,
-      groomEmail:     state.groomEmail,
       groomPhone:     state.groomPhone,
-
-      videographerStartTime:  formatTime(state.videographerStartTime),
-      videographerFinishTime: formatTime(state.videographerFinishTime),
-      ceremonyStartTime:      formatTime(state.ceremonyStartTime),
-      ceremonyEndTime:        formatTime(state.ceremonyEndTime),
-      ceremonyAddress:        state.ceremonyAddress,
-      receptionStartTime:     formatTime(state.receptionStartTime),
-      receptionEndTime:       formatTime(state.receptionEndTime),
-      receptionAddress:       state.receptionAddress,
-      guestCount:             parseInt(state.guestCount, 10) || null,
 
       bridePrepAddress: state.bridePrepAddress,
       groomPrepAddress: state.groomPrepAddress,
 
-      weddingPlanner:     state.weddingPlanner,
-      caterer:            state.caterer,
-      photographer:       state.photographer,
-      florist:            state.florist,
-      hairStylist:        state.hairStylist,
-      makeupArtist:       state.makeupArtist,
-      bandDj:             state.bandDj,
-      bridalGownDesigner: state.bridalGownDesigner,
-      groomSuit:          state.groomSuit,
-      otherVendors:       state.otherVendors,
+      ceremonyStartTime:  formatTime(state.ceremonyStartTime),
+      ceremonyAddress:    state.ceremonyAddress,
+      receptionStartTime: formatTime(state.receptionStartTime),
+      receptionAddress:   state.receptionAddress,
+      guestCount:         parseInt(state.guestCount, 10) || null,
 
       firstDance:          state.firstDance,
       fatherDaughterDance: state.fatherDaughterDance,
@@ -1869,6 +1904,17 @@
       },
 
       notes: state.notes,
+
+      weddingPlanner:     state.weddingPlanner,
+      caterer:            state.caterer,
+      photographer:       state.photographer,
+      florist:            state.florist,
+      hairStylist:        state.hairStylist,
+      makeupArtist:       state.makeupArtist,
+      bandDj:             state.bandDj,
+      bridalGownDesigner: state.bridalGownDesigner,
+      groomSuit:          state.groomSuit,
+      otherVendors:       state.otherVendors,
     };
 
     if (WEBHOOK_URL === 'REPLACE_WITH_MAKE_WEBHOOK_URL') {
