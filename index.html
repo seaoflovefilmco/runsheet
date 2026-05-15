@@ -243,12 +243,14 @@
      ============================================================ */
   .callout {
     margin: 0 0 2.5rem;
-    /* Symmetrical 2.5rem on all four sides — top padding equals
-       bottom padding, side padding matches. With the CTA having
-       no margin-bottom and the callout's last child being the
-       link, the button sits exactly 2.5rem from the bottom edge
-       (> 2rem minimum), and the box never reads bottom-heavy. */
-    padding: 2.5rem;
+    /* Symmetrical 3rem (48px) on all four sides on desktop. The
+       button is the last child with no margin-bottom, so its
+       outer edge sits exactly 48px from the callout's bottom
+       border — comfortably above the 32px minimum specified in
+       the spacing audit, with extra cushion to absorb any
+       inline-block baseline space that might otherwise read as
+       "flush". Mobile drops to 2.5rem (40px) — still > 32px. */
+    padding: 3rem;
     background: var(--bg-tonal);
     border: 1px solid var(--rule);
     border-radius: 6px;
@@ -856,9 +858,9 @@
       padding: 1.5rem 1.25rem;
     }
     .callout {
-      /* Mobile keeps the symmetrical pattern — 2rem all sides,
-         still > 2rem of breathing room beneath any CTA. */
-      padding: 2rem;
+      /* Mobile keeps the symmetrical pattern — 2.5rem (40px) all
+         sides, still > 32px of breathing room beneath any CTA. */
+      padding: 2.5rem;
     }
     .btn-primary,
     .btn-secondary {
@@ -977,6 +979,30 @@
             <label class="field-label" for="groomPhone">Contact number <span class="field-required">·  required</span></label>
             <input type="tel" id="groomPhone" autocomplete="tel" inputmode="tel" />
             <span class="field-error">Please add a contact number</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="moment">
+        <header class="moment-header">
+          <span class="moment-eyebrow">Additional contact</span>
+          <h3 class="moment-title">Anyone else we should coordinate with?</h3>
+          <p class="moment-sub">A planner, family coordinator, or friend who's helping run the day. Optional.</p>
+        </header>
+        <div class="form-stack">
+          <div class="form-row">
+            <div class="field" data-field="contactFirstName">
+              <label class="field-label" for="contactFirstName">First name</label>
+              <input type="text" id="contactFirstName" autocomplete="given-name" />
+            </div>
+            <div class="field" data-field="contactLastName">
+              <label class="field-label" for="contactLastName">Last name</label>
+              <input type="text" id="contactLastName" autocomplete="family-name" />
+            </div>
+          </div>
+          <div class="field" data-field="contactPhone">
+            <label class="field-label" for="contactPhone">Contact number</label>
+            <input type="tel" id="contactPhone" autocomplete="tel" inputmode="tel" />
           </div>
         </div>
       </div>
@@ -1175,44 +1201,6 @@
 
       <div class="moment">
         <header class="moment-header">
-          <span class="moment-eyebrow">Additional contact</span>
-          <h3 class="moment-title">Anyone else we should coordinate with?</h3>
-          <p class="moment-sub">A planner, family coordinator, or friend who's helping run the day. Optional.</p>
-        </header>
-        <div class="form-stack">
-          <div class="form-row">
-            <div class="field" data-field="contactFirstName">
-              <label class="field-label" for="contactFirstName">First name</label>
-              <input type="text" id="contactFirstName" autocomplete="given-name" />
-            </div>
-            <div class="field" data-field="contactLastName">
-              <label class="field-label" for="contactLastName">Last name</label>
-              <input type="text" id="contactLastName" autocomplete="family-name" />
-            </div>
-          </div>
-          <div class="field" data-field="contactPhone">
-            <label class="field-label" for="contactPhone">Contact number</label>
-            <input type="tel" id="contactPhone" autocomplete="tel" inputmode="tel" />
-          </div>
-        </div>
-      </div>
-
-      <div class="moment">
-        <header class="moment-header">
-          <span class="moment-eyebrow">Anything else</span>
-          <h3 class="moment-title">Notes for us</h3>
-          <p class="moment-sub">Anything we should know that the form didn't cover</p>
-        </header>
-        <div class="form-stack">
-          <div class="field" data-field="notes">
-            <label class="field-label" for="notes">Notes</label>
-            <textarea id="notes" rows="5" placeholder="Surprises, sensitivities, family dynamics, accessibility needs, special requests — anything that helps us turn up prepared."></textarea>
-          </div>
-        </div>
-      </div>
-
-      <div class="moment">
-        <header class="moment-header">
           <span class="moment-eyebrow">Tag us in</span>
           <h3 class="moment-title">Social media</h3>
           <p class="moment-sub">Where we'll tag you when we share your film.</p>
@@ -1234,6 +1222,20 @@
             </div>
           </div>
           <p class="consent-hint">We love sharing our couples' films, and tagging you helps your friends find your footage. We'll never post without your permission.</p>
+        </div>
+      </div>
+
+      <div class="moment">
+        <header class="moment-header">
+          <span class="moment-eyebrow">Anything else</span>
+          <h3 class="moment-title">Notes for us</h3>
+          <p class="moment-sub">Anything we should know that the form didn't cover</p>
+        </header>
+        <div class="form-stack">
+          <div class="field" data-field="notes">
+            <label class="field-label" for="notes">Notes</label>
+            <textarea id="notes" rows="5" placeholder="Surprises, sensitivities, family dynamics, accessibility needs, special requests — anything that helps us turn up prepared."></textarea>
+          </div>
         </div>
       </div>
     </div>
@@ -1945,12 +1947,18 @@
     var contactName = (state.contactFirstName + ' ' + state.contactLastName).trim() || '—';
 
     /* Edit-step indices follow the new ordering:
-         0 Details · 1 Locations · 2 Timing · 3 Moments · 4 Vendors */
+         0 Details · 1 Locations · 2 Timing · 3 Moments · 4 Vendors
+       Details now also carries the Additional Contact rows
+       since that card was moved out of Moments. Moments now
+       flows toggles → social → notes, matching the visual
+       order of the cards on Step 4. */
     var details = summaryBlock('Your details', 0, [
-      summaryRow('Bride',       brideName),
-      summaryRow('Bride phone', formatField(state.bridePhone)),
-      summaryRow('Groom',       groomName),
-      summaryRow('Groom phone', formatField(state.groomPhone)),
+      summaryRow('Bride',              brideName),
+      summaryRow('Bride phone',        formatField(state.bridePhone)),
+      summaryRow('Groom',              groomName),
+      summaryRow('Groom phone',        formatField(state.groomPhone)),
+      summaryRow('Additional contact', contactName),
+      summaryRow('Contact phone',      formatField(state.contactPhone)),
     ]);
 
     var locations = summaryBlock('Locations', 1, [
@@ -1971,12 +1979,10 @@
       summaryRow('Father / daughter dance', formatYesNo(state.fatherDaughterDance)),
       summaryRow('Mother / son dance',      formatYesNo(state.motherSonDance)),
       summaryRow('Cake cutting',            formatYesNo(state.cakeCutting)),
-      summaryRow('Additional contact',      contactName),
-      summaryRow('Contact phone',           formatField(state.contactPhone)),
-      summaryRow('Notes',                   formatField(state.notes)),
       summaryRow('Bride Instagram',         formatField(state.brideInstagram)),
       summaryRow('Partner Instagram',       formatField(state.groomInstagram)),
       summaryRow('Tag consent',             formatYesNo(state.socialConsent)),
+      summaryRow('Notes',                   formatField(state.notes)),
     ]);
 
     var vendors = summaryBlock('Vendors', 4, [
