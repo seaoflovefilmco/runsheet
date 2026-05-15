@@ -243,10 +243,22 @@
      ============================================================ */
   .callout {
     margin: 0 0 2.5rem;
-    padding: 2rem 2.25rem;
+    /* Symmetrical 2.5rem on all four sides — top padding equals
+       bottom padding, side padding matches. With the CTA having
+       no margin-bottom and the callout's last child being the
+       link, the button sits exactly 2.5rem from the bottom edge
+       (> 2rem minimum), and the box never reads bottom-heavy. */
+    padding: 2.5rem;
     background: var(--bg-tonal);
     border: 1px solid var(--rule);
     border-radius: 6px;
+  }
+  /* When the callout's last visible element is the link, drop
+     the body's bottom margin so the spacing above the link is
+     controlled by the callout's own padding rhythm rather than
+     stacked margins. */
+  .callout > *:last-child {
+    margin-bottom: 0;
   }
   .callout-eyebrow {
     display: block;
@@ -267,7 +279,7 @@
     color: var(--black);
   }
   .callout-body {
-    margin: 0 0 1.5rem;
+    margin: 0 0 1.75rem;
     font-family: var(--sans);
     font-size: 15px;
     line-height: 1.6;
@@ -275,6 +287,7 @@
   }
   .callout-link {
     display: inline-block;
+    margin: 0;
     padding: 11px 24px;
     border-radius: 999px;
     background: var(--black);
@@ -514,6 +527,27 @@
     background: var(--black);
     color: var(--white);
     border-color: var(--black);
+  }
+  /* Error state for a required yes/no (currently only the
+     social-consent toggle). Both pills get the terracotta
+     border so the unselected control reads as needing
+     attention; the user clicks one, the .has-error class is
+     removed on input, and the selected pill returns to its
+     normal black fill. */
+  .yesno.has-error .yesno-btn {
+    border-color: var(--error);
+    color: var(--error);
+  }
+
+  /* Hint text below the social consent toggle. Tightens the
+     gap above (form-stack uses 1.5rem gap; we want it to read
+     as attached to the toggle, not as its own field). */
+  .consent-hint {
+    margin: -0.5rem 0 0;
+    font-family: var(--sans);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--mid);
   }
 
   /* ============================================================
@@ -813,7 +847,9 @@
       padding: 1.5rem 1.25rem;
     }
     .callout {
-      padding: 1.5rem 1.25rem;
+      /* Mobile keeps the symmetrical pattern — 2rem all sides,
+         still > 2rem of breathing room beneath any CTA. */
+      padding: 2rem;
     }
     .btn-primary,
     .btn-secondary {
@@ -1165,6 +1201,32 @@
           </div>
         </div>
       </div>
+
+      <div class="moment">
+        <header class="moment-header">
+          <span class="moment-eyebrow">Tag us in</span>
+          <h3 class="moment-title">Social media</h3>
+          <p class="moment-sub">Where we'll tag you when we share your film.</p>
+        </header>
+        <div class="form-stack">
+          <div class="field" data-field="brideInstagram">
+            <label class="field-label" for="brideInstagram">Your Instagram handle</label>
+            <input type="text" id="brideInstagram" placeholder="@yourhandle" autocomplete="off" />
+          </div>
+          <div class="field" data-field="groomInstagram">
+            <label class="field-label" for="groomInstagram">Your partner's Instagram handle</label>
+            <input type="text" id="groomInstagram" placeholder="@yourhandle" autocomplete="off" />
+          </div>
+          <div class="yesno" data-field="socialConsent">
+            <span class="yesno-label">Do you consent for us to tag you in our social posts? <span class="field-required">·  required</span></span>
+            <div class="yesno-buttons">
+              <button type="button" class="yesno-btn" data-value="yes">Yes</button>
+              <button type="button" class="yesno-btn" data-value="no">No</button>
+            </div>
+          </div>
+          <p class="consent-hint">We love sharing our couples' films, and tagging you helps your friends find your footage. We'll never post without your permission.</p>
+        </div>
+      </div>
     </div>
 
     <p class="autosave-note">Your progress is saved automatically</p>
@@ -1251,6 +1313,13 @@
     <h2>Your <em>runsheet.</em></h2>
     <p>Take a moment to check everything looks right. You can edit any section before sending.</p>
 
+    <!-- Contract review callout — content rendered by JS based
+         on the ?contract= URL param. When present, the callout
+         carries a "Review your contract ↗" CTA pointing at the
+         decoded URL. When absent, the callout shows the
+         Qwilr-email fallback copy with no CTA. -->
+    <aside class="callout" id="contractCallout"></aside>
+
     <div class="moment-sections">
       <div class="moment">
         <header class="moment-header">
@@ -1311,13 +1380,22 @@
   /* ============================================================
      URL parameters
      ------------------------------------------------------------
-     id      (required): Monday item ID. Used as the localStorage
-                         key suffix so two browsers / two
-                         refreshes on the same link resume the
-                         same draft, and as the payload field
-                         that routes the submission on Monday.
-     couple  (optional): URL-encoded couple names for the
-                         greeting on Step 1 (e.g. "Amy & Braden").
+     id        (required): Monday item ID. Used as the
+                           localStorage key suffix so two browsers
+                           / two refreshes on the same link
+                           resume the same draft, and as the
+                           payload field that routes the
+                           submission on Monday.
+     couple    (optional): URL-encoded couple names for the
+                           greeting on Step 1 (e.g. "Amy & Braden").
+     contract  (optional): Fully-encoded URL pointing at the
+                           couple's Qwilr proposal / contract.
+                           When present, the Review-screen
+                           contract callout renders a "Review
+                           your contract ↗" CTA targeting the
+                           decoded URL; when absent, the callout
+                           falls back to instructional copy
+                           pointing at the original Qwilr email.
      ============================================================ */
   var params = new URLSearchParams(window.location.search);
   var mondayItemId = (params.get('id') || '').trim();
@@ -1327,6 +1405,13 @@
     coupleNames = coupleParam ? decodeURIComponent(coupleParam) : '';
   } catch (e) {
     coupleNames = coupleParam; /* malformed encoding — fall back */
+  }
+  var contractParam = params.get('contract') || '';
+  var contractUrl = '';
+  try {
+    contractUrl = contractParam ? decodeURIComponent(contractParam) : '';
+  } catch (e) {
+    contractUrl = ''; /* malformed encoding — drop to fallback copy */
   }
 
   /* ============================================================
@@ -1363,6 +1448,10 @@
 
     notes: '',
 
+    brideInstagram: '',
+    groomInstagram: '',
+    socialConsent: null,
+
     weddingPlanner: '',
     caterer: '',
     photographer: '',
@@ -1396,7 +1485,9 @@
     bindInputs();
     bindYesNo();
     bindTime();
+    bindInstagramAutoAt();
     bindNav();
+    renderContractCallout();
     initProgressBarOverflow();
     goTo(0, /* skipScroll */ true);
   }
@@ -1457,6 +1548,7 @@
       'bridePrepAddress','groomPrepAddress',
       'ceremonyAddress','receptionAddress','guestCount',
       'contactFirstName','contactLastName','contactPhone','notes',
+      'brideInstagram','groomInstagram',
       'weddingPlanner','caterer','photographer','florist','hairStylist',
       'makeupArtist','bandDj','bridalGownDesigner','groomSuit','otherVendors',
       'coupleEmail',
@@ -1556,6 +1648,54 @@
         });
       });
     });
+  }
+
+  /* ============================================================
+     Instagram handle auto-@ on blur. If the user types
+     "myhandle" without the leading @, we prepend one when they
+     leave the field. Empty values are left alone. Save-on-blur
+     keeps the draft in sync. The input handler in bindInputs
+     also saves keystrokes; this just normalises the final
+     value so the payload always carries handles in `@xyz` form.
+     ============================================================ */
+  function bindInstagramAutoAt() {
+    ['brideInstagram', 'groomInstagram'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('blur', function () {
+        var v = (el.value || '').trim();
+        if (v && v.charAt(0) !== '@') {
+          v = '@' + v;
+        }
+        el.value = v;
+        state[id] = v;
+        saveDraft();
+      });
+    });
+  }
+
+  /* ============================================================
+     Contract callout — adaptive content based on the ?contract=
+     URL param. When present, renders the CTA link to the decoded
+     URL; when absent, renders only the Qwilr-email fallback copy
+     with no button. Called once at mount; nothing later in the
+     flow re-renders this. innerHTML is safe because the only
+     dynamic piece is the URL, which we run through escapeHtml.
+     ============================================================ */
+  function renderContractCallout() {
+    var el = document.getElementById('contractCallout');
+    if (!el) return;
+    var head = '' +
+      '<span class="callout-eyebrow">One last thing</span>' +
+      '<h3 class="callout-title">Please review your contract</h3>';
+    if (contractUrl) {
+      el.innerHTML = head +
+        "<p class=\"callout-body\">Before submitting, take a moment to re-read your package details, inclusions, and T&amp;Cs so everything's fresh.</p>" +
+        '<a class="callout-link" href="' + escapeHtml(contractUrl) + '" target="_blank" rel="noopener noreferrer">Review your contract ↗</a>';
+    } else {
+      el.innerHTML = head +
+        "<p class=\"callout-body\">Before submitting, take a moment to re-read your package details, inclusions, and T&amp;Cs. You'll find them in your original Qwilr proposal email from us.</p>";
+    }
   }
 
   function bindNav() {
@@ -1666,7 +1806,7 @@
       'receptionStartTime','receptionAddress',
       'guestCount',
     ],
-    3: [],
+    3: ['socialConsent'],
     4: [],
     5: ['coupleEmail'],
   };
@@ -1697,6 +1837,13 @@
     if (typeof val === 'object' && val !== null && 'period' in val) {
       return isTimeComplete(val);
     }
+    /* Required yes/no toggles (currently socialConsent only)
+       store true | false | null. Both true and false are valid
+       answers — only the initial null state should fail. The
+       fall-through string check would treat `false` as invalid
+       (!!(false && …) === false), so we need this explicit
+       boolean clause before it. */
+    if (val === true || val === false) return true;
     return !!(val && String(val).trim());
   }
 
@@ -1818,6 +1965,9 @@
       summaryRow('Additional contact',      contactName),
       summaryRow('Contact phone',           formatField(state.contactPhone)),
       summaryRow('Notes',                   formatField(state.notes)),
+      summaryRow('Bride Instagram',         formatField(state.brideInstagram)),
+      summaryRow('Partner Instagram',       formatField(state.groomInstagram)),
+      summaryRow('Tag consent',             formatYesNo(state.socialConsent)),
     ]);
 
     var vendors = summaryBlock('Vendors', 4, [
@@ -1904,6 +2054,10 @@
       },
 
       notes: state.notes,
+
+      brideInstagram: state.brideInstagram,
+      groomInstagram: state.groomInstagram,
+      socialConsent:  state.socialConsent,
 
       weddingPlanner:     state.weddingPlanner,
       caterer:            state.caterer,
