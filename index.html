@@ -1459,14 +1459,17 @@
   /* ============================================================
      Webhook endpoint
      ------------------------------------------------------------
-     REPLACE WITH THE PRODUCTION MAKE WEBHOOK URL once the
-     scenario is built. The scenario receives the POST body
-     defined in submitRunsheet() and routes the values to the
-     matching Monday item row keyed by `mondayItemId`. Until the
-     real URL is swapped in, submit attempts surface a graceful
-     error message and keep the form state intact.
+     The literal __MAKE_WEBHOOK_URL__ token is replaced at deploy
+     time by the GitHub Actions workflow at .github/workflows/
+     deploy.yml using the MAKE_WEBHOOK_URL repository secret.
+     The scenario receives the POST body defined in
+     submitRunsheet() and routes the values to the matching
+     Monday item row keyed by `mondayItemId`. Locally (or before
+     the secret is wired), this placeholder will cause submit
+     attempts to surface a graceful error message and keep the
+     form state intact.
      ============================================================ */
-  const WEBHOOK_URL = 'REPLACE_WITH_MAKE_WEBHOOK_URL';
+  const WEBHOOK_URL = '__MAKE_WEBHOOK_URL__';
 
   /* ============================================================
      Google Places (New) API key
@@ -2401,7 +2404,12 @@
       otherVendors:       state.otherVendors,
     };
 
-    if (WEBHOOK_URL === 'REPLACE_WITH_MAKE_WEBHOOK_URL') {
+    /* Guard against the deploy substitution not having run
+       (local preview, secret not yet added, etc.). When the
+       placeholder is still in place, surface the same graceful
+       error UI as a real network failure and log the would-be
+       payload for inspection — never POST to the literal token. */
+    if (WEBHOOK_URL === '__MAKE_WEBHOOK_URL__') {
       handleFailure();
       console.warn('[runsheet] WEBHOOK_URL not configured. Payload:', payload);
       return;
