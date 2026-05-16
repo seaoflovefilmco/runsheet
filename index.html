@@ -1442,15 +1442,20 @@
   /* ============================================================
      Google Places (New) API key
      ------------------------------------------------------------
-     Restricted to the two domains this app is ever served from
-     (runsheet.seaoflovefilm.co + seaoflovefilmco.github.io) and
-     locked to the Places API (New) only. Safe to commit; can't
-     be reused on other sites or for unrelated Google APIs.
-     The key powers the four address autocompletes on Steps 2
-     and 3. If the Maps script fails to load for any reason, the
-     address inputs degrade gracefully to plain text fields.
+     The literal __GOOGLE_PLACES_KEY__ token below is replaced at
+     deploy time by the GitHub Actions workflow at
+     .github/workflows/deploy.yml using the GOOGLE_PLACES_KEY
+     repository secret. The previously-hardcoded key was rotated
+     out after GitHub Secret Scanning flagged it; this token
+     pattern keeps the new key out of the source.
+
+     Locally (or on any deploy that runs before the secret is
+     wired up) this placeholder will cause Maps API requests to
+     fail, but the four address fields still work as plain text
+     inputs thanks to the graceful-degradation pattern below —
+     no error shown, no submit blocked.
      ============================================================ */
-  const GOOGLE_PLACES_API_KEY = 'AIzaSyBnLVdEGu5TOv7kdSsDDWDrBAZUioKTubY';
+  const GOOGLE_PLACES_API_KEY = '__GOOGLE_PLACES_KEY__';
 
   /* ============================================================
      URL parameters
