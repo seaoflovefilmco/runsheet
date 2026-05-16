@@ -411,6 +411,49 @@
   }
 
   /* ============================================================
+     Place autocomplete (Google Places New)
+     ------------------------------------------------------------
+     The `.place-input` wrapper holds either:
+       (a) the plain <input> alone (pre-Maps load, or if Maps
+           fails to load — graceful fallback to a normal text
+           field with no autocomplete), or
+       (b) the plain <input> hidden + a <gmp-place-autocomplete>
+           custom element appended next to it once Maps has
+           loaded. The autocomplete element renders its own
+           input and suggestion dropdown via shadow DOM.
+     Styling targets the documented CSS custom properties so the
+     surface, type, and accent colors come from our palette.
+     ============================================================ */
+  .place-input {
+    position: relative;
+  }
+  /* Hide the plain input only when an autocomplete element is
+     successfully mounted alongside it. JS sets data-ready="1"
+     after a clean PlaceAutocompleteElement init. */
+  .place-input[data-ready="1"] > input {
+    display: none;
+  }
+  .place-input gmp-place-autocomplete {
+    display: block;
+    width: 100%;
+    --gmpx-color-surface: var(--white);
+    --gmpx-color-on-surface: var(--black);
+    --gmpx-color-on-surface-variant: var(--mid);
+    --gmpx-color-outline: var(--rule-strong);
+    --gmpx-color-primary: var(--black);
+    --gmpx-font-family-base: var(--sans);
+    --gmpx-font-family-headings: var(--sans);
+    --gmpx-font-size-base: 16px;
+  }
+  /* When the autocomplete is mounted inside a .field that's in
+     error state, surface that on the custom element via the
+     accent colour. */
+  .field.has-error .place-input gmp-place-autocomplete {
+    --gmpx-color-outline: var(--error);
+    --gmpx-color-primary: var(--error);
+  }
+
+  /* ============================================================
      Time composite — hour : minute + AM/PM toggle
      Three inputs sit on a shared hairline so the composite reads
      as one editorial field. AM/PM is a two-pill segmented control
@@ -1033,7 +1076,9 @@
         <div class="form-stack">
           <div class="field" data-field="bridePrepAddress">
             <label class="field-label" for="bridePrepAddress">Full address <span class="field-required">·  required</span></label>
-            <textarea id="bridePrepAddress" rows="2" placeholder="e.g. 42 Acland St, St Kilda VIC 3182"></textarea>
+            <div class="place-input" data-place-field="bridePrep">
+              <input type="text" id="bridePrepAddress" placeholder="Start typing an address or venue…" autocomplete="off" />
+            </div>
             <span class="field-error">Please add the bride preparation address</span>
           </div>
         </div>
@@ -1048,7 +1093,9 @@
         <div class="form-stack">
           <div class="field" data-field="groomPrepAddress">
             <label class="field-label" for="groomPrepAddress">Full address <span class="field-required">·  required</span></label>
-            <textarea id="groomPrepAddress" rows="2" placeholder="e.g. 18 Punt Rd, Richmond VIC 3121"></textarea>
+            <div class="place-input" data-place-field="groomPrep">
+              <input type="text" id="groomPrepAddress" placeholder="Start typing an address or venue…" autocomplete="off" />
+            </div>
             <span class="field-error">Please add the groom preparation address</span>
           </div>
         </div>
@@ -1097,7 +1144,9 @@
           </div>
           <div class="field" data-field="ceremonyAddress">
             <label class="field-label" for="ceremonyAddress">Address <span class="field-required">·  required</span></label>
-            <textarea id="ceremonyAddress" rows="2" placeholder="Street, suburb, state, postcode"></textarea>
+            <div class="place-input" data-place-field="ceremony">
+              <input type="text" id="ceremonyAddress" placeholder="Start typing an address or venue…" autocomplete="off" />
+            </div>
             <span class="field-error">Please add the ceremony address</span>
           </div>
         </div>
@@ -1125,7 +1174,9 @@
           </div>
           <div class="field" data-field="receptionAddress">
             <label class="field-label" for="receptionAddress">Address <span class="field-required">·  required</span></label>
-            <textarea id="receptionAddress" rows="2" placeholder="Street, suburb, state, postcode"></textarea>
+            <div class="place-input" data-place-field="reception">
+              <input type="text" id="receptionAddress" placeholder="Start typing an address or venue…" autocomplete="off" />
+            </div>
             <span class="field-error">Please add the reception address</span>
           </div>
           <div class="field" data-field="guestCount">
@@ -1389,6 +1440,19 @@
   const WEBHOOK_URL = 'REPLACE_WITH_MAKE_WEBHOOK_URL';
 
   /* ============================================================
+     Google Places (New) API key
+     ------------------------------------------------------------
+     Restricted to the two domains this app is ever served from
+     (runsheet.seaoflovefilm.co + seaoflovefilmco.github.io) and
+     locked to the Places API (New) only. Safe to commit; can't
+     be reused on other sites or for unrelated Google APIs.
+     The key powers the four address autocompletes on Steps 2
+     and 3. If the Maps script fails to load for any reason, the
+     address inputs degrade gracefully to plain text fields.
+     ============================================================ */
+  const GOOGLE_PLACES_API_KEY = 'AIzaSyBnLVdEGu5TOv7kdSsDDWDrBAZUioKTubY';
+
+  /* ============================================================
      URL parameters
      ------------------------------------------------------------
      id        (required): Monday item ID. Used as the
@@ -1439,14 +1503,30 @@
     groomLastName: '',
     groomPhone: '',
 
-    bridePrepAddress: '',
-    groomPrepAddress: '',
+    bridePrepAddress:     '',
+    bridePrepLat:         null,
+    bridePrepLng:         null,
+    bridePrepPlaceId:     '',
+    bridePrepDisplayName: '',
+    groomPrepAddress:     '',
+    groomPrepLat:         null,
+    groomPrepLng:         null,
+    groomPrepPlaceId:     '',
+    groomPrepDisplayName: '',
 
-    ceremonyStartTime:  { hour: '', min: '', period: '' },
-    ceremonyAddress:    '',
-    receptionStartTime: { hour: '', min: '', period: '' },
-    receptionAddress:   '',
-    guestCount:         '',
+    ceremonyStartTime:    { hour: '', min: '', period: '' },
+    ceremonyAddress:      '',
+    ceremonyLat:          null,
+    ceremonyLng:          null,
+    ceremonyPlaceId:      '',
+    ceremonyDisplayName:  '',
+    receptionStartTime:   { hour: '', min: '', period: '' },
+    receptionAddress:     '',
+    receptionLat:         null,
+    receptionLng:         null,
+    receptionPlaceId:     '',
+    receptionDisplayName: '',
+    guestCount:           '',
 
     firstDance: null,
     fatherDaughterDance: null,
@@ -1500,6 +1580,7 @@
     bindNav();
     renderContractCallout();
     initProgressBarOverflow();
+    loadGoogleMapsApi();
     goTo(0, /* skipScroll */ true);
   }
 
@@ -1707,6 +1788,165 @@
       el.innerHTML = head +
         "<p class=\"callout-body\">Before submitting, take a moment to re-read your package details, inclusions, and T&amp;Cs. You'll find them in your original Qwilr proposal email from us.</p>";
     }
+  }
+
+  /* ============================================================
+     Google Places autocomplete (Places API New) — wires up the
+     four address fields on Steps 2 and 3.
+     ------------------------------------------------------------
+     Each .place-input wrapper carries a data-place-field key
+     that maps to four state slots: <key>Address, <key>Lat,
+     <key>Lng, <key>PlaceId, <key>DisplayName. On gmp-select we
+     fetch the place's full fields and write all five into
+     state. On typed-but-not-selected (debounced 300ms) we save
+     the typed string and wipe the other four — that captures
+     users who type without picking a suggestion.
+
+     If the Maps script fails to load (offline / blocked /
+     revoked key) every wrapper keeps its plain <input> visible
+     and the form remains fully usable as plain text fields.
+     ============================================================ */
+  var PLACE_FIELDS = ['bridePrep', 'groomPrep', 'ceremony', 'reception'];
+
+  function loadGoogleMapsApi() {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      initAllPlaceAutocomplete();
+      return;
+    }
+    window.__runsheetMapsReady = function () {
+      try { initAllPlaceAutocomplete(); }
+      catch (e) { console.warn('[runsheet] autocomplete init failed', e); }
+    };
+    var s = document.createElement('script');
+    s.src = 'https://maps.googleapis.com/maps/api/js' +
+            '?key=' + encodeURIComponent(GOOGLE_PLACES_API_KEY) +
+            '&loading=async&libraries=places&v=weekly' +
+            '&callback=__runsheetMapsReady';
+    s.async = true;
+    s.defer = true;
+    s.onerror = function () {
+      console.warn('[runsheet] Google Maps failed to load — address inputs fall back to plain text');
+    };
+    document.head.appendChild(s);
+  }
+
+  function initAllPlaceAutocomplete() {
+    if (!window.google || !window.google.maps || !window.google.maps.places) return;
+    if (typeof google.maps.places.PlaceAutocompleteElement !== 'function') {
+      console.warn('[runsheet] PlaceAutocompleteElement unavailable on this Maps build');
+      return;
+    }
+    document.querySelectorAll('.place-input').forEach(function (wrap) {
+      try { initOnePlaceAutocomplete(wrap); }
+      catch (e) { console.warn('[runsheet] place init', wrap.getAttribute('data-place-field'), e); }
+    });
+  }
+
+  function initOnePlaceAutocomplete(wrap) {
+    var key = wrap.getAttribute('data-place-field');
+    if (!key) return;
+
+    var pac = new google.maps.places.PlaceAutocompleteElement({
+      componentRestrictions: { country: 'au' },
+      types: ['geocode', 'establishment'],
+    });
+    wrap.appendChild(pac);
+    wrap.setAttribute('data-ready', '1');
+
+    /* Restore any saved address into the autocomplete element.
+       PlaceAutocompleteElement exposes .value on some builds and
+       relies on its internal input on others — set both paths
+       defensively so a returning visitor sees their saved
+       address regardless of API version. */
+    var saved = state[key + 'Address'] || '';
+    if (saved) {
+      try { pac.value = saved; } catch (e) {}
+      setTimeout(function () {
+        var ii = pac.querySelector('input');
+        if (ii && !ii.value) ii.value = saved;
+      }, 0);
+    }
+
+    pac.addEventListener('gmp-select', function (ev) {
+      handlePlaceSelect(key, ev);
+    });
+
+    /* Debounced capture of typed-but-not-selected values. The
+       300ms wait keeps autocomplete network requests cool and
+       avoids fighting the API's own internal debouncing. */
+    var dbTimer;
+    pac.addEventListener('input', function (e) {
+      clearTimeout(dbTimer);
+      dbTimer = setTimeout(function () {
+        var v = '';
+        if (e && e.target && typeof e.target.value === 'string') v = e.target.value;
+        else if (typeof pac.value === 'string') v = pac.value;
+        if (v !== state[key + 'Address']) {
+          state[key + 'Address']     = v;
+          state[key + 'Lat']         = null;
+          state[key + 'Lng']         = null;
+          state[key + 'PlaceId']     = '';
+          state[key + 'DisplayName'] = '';
+          clearFieldError(key + 'Address');
+          saveDraft();
+        }
+      }, 300);
+    }, true);
+  }
+
+  function handlePlaceSelect(key, ev) {
+    try {
+      var pred = ev && ev.placePrediction;
+      if (!pred) return;
+      var place = pred.toPlace();
+      place.fetchFields({ fields: ['formattedAddress', 'location', 'displayName', 'id'] })
+        .then(function () {
+          var loc = place.location;
+          state[key + 'Address']     = place.formattedAddress || '';
+          state[key + 'Lat']         = loc ? loc.lat() : null;
+          state[key + 'Lng']         = loc ? loc.lng() : null;
+          state[key + 'DisplayName'] = place.displayName || '';
+          state[key + 'PlaceId']     = place.id || '';
+          clearFieldError(key + 'Address');
+          saveDraft();
+          /* Mirror into the hidden plain input so the submit-time
+             sync still reads the correct value if the custom
+             element is missing for any reason. */
+          var plain = document.getElementById(key + 'Address');
+          if (plain) plain.value = state[key + 'Address'];
+        })
+        .catch(function (err) {
+          console.warn('[runsheet] fetchFields failed', err);
+        });
+    } catch (e) {
+      console.warn('[runsheet] gmp-select handler', e);
+    }
+  }
+
+  /* Submit-time backstop. If the input event didn't fire for
+     any reason (timing, shadow-DOM weirdness, browser quirks),
+     pull the current visible value out of each autocomplete
+     element and reconcile against state. */
+  function syncPlaceAutocompleteValues() {
+    PLACE_FIELDS.forEach(function (key) {
+      var wrap = document.querySelector('.place-input[data-place-field="' + key + '"]');
+      if (!wrap) return;
+      var pac = wrap.querySelector('gmp-place-autocomplete');
+      if (!pac) return;
+      var visible = '';
+      if (typeof pac.value === 'string') visible = pac.value;
+      if (!visible) {
+        var ii = pac.querySelector('input');
+        if (ii && typeof ii.value === 'string') visible = ii.value;
+      }
+      if (visible && visible.trim() && visible !== state[key + 'Address']) {
+        state[key + 'Address']     = visible;
+        state[key + 'Lat']         = null;
+        state[key + 'Lng']         = null;
+        state[key + 'PlaceId']     = '';
+        state[key + 'DisplayName'] = '';
+      }
+    });
   }
 
   function bindNav() {
@@ -2019,6 +2259,12 @@
     errBox.classList.remove('visible');
     errBox.textContent = '';
 
+    /* Backstop: pull whatever's currently visible in each
+       autocomplete element into state. Covers the case where
+       a user typed without selecting and our debounced input
+       handler hadn't fired by the time they hit Submit. */
+    syncPlaceAutocompleteValues();
+
     var firstBadStep = validateAll();
     if (firstBadStep !== null) {
       goTo(firstBadStep);
@@ -2034,7 +2280,11 @@
     /* Payload shape matches the new step order. Email is the
        single shared couple email captured on Step 6; bride/groom
        emails were removed. Videographer hours and ceremony/
-       reception end times were dropped from Step 3 (Timing). */
+       reception end times were dropped from Step 3 (Timing).
+       Each address field carries four sibling keys (Lat, Lng,
+       PlaceId, DisplayName) captured from the Google Places
+       Autocomplete — empty strings/nulls when the user typed
+       without selecting a suggestion. */
     var payload = {
       mondayItemId: mondayItemId,
       coupleNames: coupleNames || null,
@@ -2048,14 +2298,30 @@
       groomLastName:  state.groomLastName,
       groomPhone:     state.groomPhone,
 
-      bridePrepAddress: state.bridePrepAddress,
-      groomPrepAddress: state.groomPrepAddress,
+      bridePrepAddress:     state.bridePrepAddress,
+      bridePrepLat:         state.bridePrepLat,
+      bridePrepLng:         state.bridePrepLng,
+      bridePrepPlaceId:     state.bridePrepPlaceId,
+      bridePrepDisplayName: state.bridePrepDisplayName,
+      groomPrepAddress:     state.groomPrepAddress,
+      groomPrepLat:         state.groomPrepLat,
+      groomPrepLng:         state.groomPrepLng,
+      groomPrepPlaceId:     state.groomPrepPlaceId,
+      groomPrepDisplayName: state.groomPrepDisplayName,
 
-      ceremonyStartTime:  formatTime(state.ceremonyStartTime),
-      ceremonyAddress:    state.ceremonyAddress,
-      receptionStartTime: formatTime(state.receptionStartTime),
-      receptionAddress:   state.receptionAddress,
-      guestCount:         parseInt(state.guestCount, 10) || null,
+      ceremonyStartTime:    formatTime(state.ceremonyStartTime),
+      ceremonyAddress:      state.ceremonyAddress,
+      ceremonyLat:          state.ceremonyLat,
+      ceremonyLng:          state.ceremonyLng,
+      ceremonyPlaceId:      state.ceremonyPlaceId,
+      ceremonyDisplayName:  state.ceremonyDisplayName,
+      receptionStartTime:   formatTime(state.receptionStartTime),
+      receptionAddress:     state.receptionAddress,
+      receptionLat:         state.receptionLat,
+      receptionLng:         state.receptionLng,
+      receptionPlaceId:     state.receptionPlaceId,
+      receptionDisplayName: state.receptionDisplayName,
+      guestCount:           parseInt(state.guestCount, 10) || null,
 
       firstDance:          state.firstDance,
       fatherDaughterDance: state.fatherDaughterDance,
