@@ -34,6 +34,7 @@ jobs:
         run: |
           sed -i "s|__GOOGLE_PLACES_KEY__|${{ secrets.GOOGLE_PLACES_KEY }}|g" index.html
           sed -i "s|__MAKE_WEBHOOK_URL__|${{ secrets.MAKE_WEBHOOK_URL }}|g" index.html
+          sed -i "s|__BUILD_TIMESTAMP__|$(date -u +%Y-%m-%dT%H:%M:%SZ)|g" index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -2,6 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<!-- Cache-busting: GitHub Pages CDN aggressively caches static
+     HTML. These meta tags tell upstream caches and browsers to
+     re-validate on every visit so fresh deploys are picked up
+     without a hard refresh. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<!-- BUILD_TIMESTAMP: __BUILD_TIMESTAMP__ -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="description" content="Sea of Love wedding-day runsheet — a short form for couples to share the details of their day with their videographer.">
 <title>Sea of Love — Wedding Runsheet</title>
@@ -2460,5 +2468,11 @@
       .replace(/'/g, '&#39;');
   }
 </script>
+
+<!-- Tiny build pill, bottom-left. Inline styles so it can't be
+     buried by a future CSS regression. __BUILD_TIMESTAMP__ is
+     swapped at deploy time by the GitHub Actions workflow.
+     Remove this whole element before public launch. -->
+<div style="position:fixed;bottom:0;left:0;font-size:9px;color:#aaa;padding:4px;background:rgba(255,255,255,0.5);z-index:9999;font-family:monospace;">build __BUILD_TIMESTAMP__</div>
 </body>
 </html>
