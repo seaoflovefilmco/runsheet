@@ -2412,12 +2412,25 @@
       otherVendors:       state.otherVendors,
     };
 
-    /* Guard against the deploy substitution not having run
-       (local preview, secret not yet added, etc.). When the
-       placeholder is still in place, surface the same graceful
-       error UI as a real network failure and log the would-be
-       payload for inspection — never POST to the literal token. */
-    if (WEBHOOK_URL === '__MAKE_WEBHOOK_URL__') {
+    /* Guard against the deploy substitution not having run.
+       The previous check compared WEBHOOK_URL against the full
+       literal placeholder '__MAKE_WEBHOOK_URL__', but sed treats
+       every occurrence of that token in index.html the same way
+       — so on a successful deploy it clobbered BOTH the const
+       AND this comparison string with the real URL, and the
+       check became `realUrl === realUrl`, always true. Every
+       submit shorted to handleFailure() and no POST ever fired.
+
+       The new check uses a *prefix* ('__MAKE_') that does NOT
+       match sed's substitution pattern, so this literal survives
+       deploys intact. We trigger when either:
+         (a) WEBHOOK_URL is the empty string — secret missing on
+             the deploy, sed replaced the token with nothing, OR
+         (b) WEBHOOK_URL still carries the '__MAKE_' prefix —
+             sed never ran (local preview, broken workflow).
+       Real Make webhooks start with 'https://hook…' and slip
+       past both branches cleanly. */
+    if (!WEBHOOK_URL || WEBHOOK_URL.startsWith('__MAKE_')) {
       handleFailure();
       console.warn('[runsheet] WEBHOOK_URL not configured. Payload:', payload);
       return;
