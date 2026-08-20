@@ -4,7 +4,7 @@ The Sea of Love wedding-day runsheet form. Couples receive a
 personalised link with their Monday item ID and fill in their
 wedding details across six steps.
 
-Lives at `runsheet.seaoflovefilm.co`.
+Lives at `runsheet.seaoflove.com.au`.
 
 ## Architecture
 
